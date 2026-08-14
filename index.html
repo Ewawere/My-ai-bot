@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Google AI GitHub Mobile Studio</title>
+    <!-- Web App Manifest Meta for iOS / Android fullscreen app capability -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="AI Bot">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gemini: {
+                            blue: '#1a73e8',
+                            purple: '#8ab4f8',
+                            darkBg: '#131314',
+                            darkSidebar: '#1e1f20',
+                            darkCard: '#282a2c',
+                            darkHover: '#333537',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .prose pre {
+            background-color: #1e1f20;
+            color: #e3e3e3;
+            padding: 0.85rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+        }
+        .prose code {
+            font-family: monospace;
+            background-color: rgba(255,255,255,0.1);
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+        }
+        .prose p { margin-bottom: 0.5rem; }
+        .prose ul { list-style-type: disc; padding-left: 1.1rem; margin-bottom: 0.5rem; }
+        .prose ol { list-style-type: decimal; padding-left: 1.1rem; margin-bottom: 0.5rem; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3c4043; border-radius: 3px; }
+        /* Touch feedback optimization */
+        button:active { transform: scale(0.97); }
+    </style>
+</head>
+<body class="bg-[#131314] text-gray-200 h-full flex flex-col font-sans antialiased overflow-hidden">
+
+    <!-- Top Mobile-Optimized Navigation Header -->
+    <header class="h-14 border-b border-gray-800 bg-[#1e1f20] px-3 flex items-center justify-between shrink-0 z-10">
+        <div class="flex items-center space-x-2">
+            <button id="mobileMenuBtn" class="text-gray-300 hover:text-white p-2 rounded-lg bg-gray-800/80 active:bg-gray-700">
+                <i class="fa-solid fa-sliders text-base"></i>
+            </button>
+            <div class="flex items-center space-x-1.5">
+                <svg class="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/>
+                </svg>
+                <span class="font-bold text-base text-white tracking-tight">AI GitHub Bot</span>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <!-- Fullscreen Toggle Button -->
+            <button id="fullscreenBtn" class="p-2 text-gray-300 hover:text-white rounded-lg bg-gray-800/80 active:bg-gray-700" title="Toggle Fullscreen">
+                <i class="fa-solid fa-expand text-sm" id="fsIcon"></i>
+            </button>
+            
+            <!-- GitHub Badge -->
+            <button id="githubBadge" class="text-xs bg-gray-800 text-gray-300 px-2.5 py-1.5 rounded-lg flex items-center gap-1 border border-gray-700">
+                <i class="fa-brands fa-github text-sm" id="githubBadgeIcon"></i>
+                <span id="githubStatusText" class="max-w-[80px] truncate text-[11px]">Offline</span>
+            </button>
+
+            <!-- Clear Chat -->
+            <button id="clearChatBtn" class="p-2 text-red-400 hover:text-red-300 rounded-lg bg-gray-800/80 active:bg-gray-700" title="Clear Chat History">
+                <i class="fa-solid fa-trash text-sm"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="flex-1 flex overflow-hidden relative">
+
+        <!-- Sidebar / Settings Drawer -->
+        <aside id="sidebar" class="w-80 bg-[#1e1f20] border-r border-gray-800 flex flex-col transition-all duration-300 z-30 fixed md:static inset-y-0 left-0 -translate-x-full md:translate-x-0 shadow-2xl">
+            <div class="p-4 border-b border-gray-800 flex justify-between items-center">
+                <h2 class="font-medium text-gray-200 flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-gear text-blue-400"></i> Bot & Account Settings
+                </h2>
+                <button id="closeSidebarBtn" class="text-gray-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                
+                <!-- GITHUB INTEGRATION SECTION -->
+                <div class="bg-[#282a2c] border border-gray-700/80 rounded-xl p-3.5 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-gray-300 flex items-center gap-1.5 uppercase tracking-wider">
+                            <i class="fa-brands fa-github text-sm text-white"></i> GitHub Login
+                        </span>
+                        <span id="ghConnDot" class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] text-gray-400 mb-1">Personal Access Token (PAT)</label>
+                        <input type="password" id="githubTokenInput" class="w-full bg-[#1e1f20] border border-gray-700 rounded-lg px-2.5 py-2 text-xs text-gray-200 focus:outline-none focus:border-blue-500" placeholder="ghp_xxxxxxxxxxxxxxxxx">
+                        <p class="text-[10px] text-emerald-400 mt-1">Saved permanently on this device until you log out!</p>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button id="connectGithubBtn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs py-2 rounded-lg font-medium transition active:scale-95">
+                            Connect & Save
+                        </button>
+                        <button id="disconnectGithubBtn" class="bg-red-900/60 hover:bg-red-800 text-red-200 text-xs px-2.5 py-2 rounded-lg transition hidden">
+                            Forget Token
+                        </button>
+                    </div>
+
+                    <!-- Target Repo Config -->
+                    <div id="repoSelectorContainer" class="hidden space-y-2 pt-2 border-t border-gray-700">
+                        <label class="block text-[11px] text-gray-400">Active Repository</label>
+                        <select id="repoSelect" class="w-full bg-[#1e1f20] border border-gray-700 rounded-lg px-2 py-2 text-xs text-gray-200 focus:outline-none focus:border-blue-500">
+                            <option value="">Select a repository...</option>
+                        </select>
+                        <input type="text" id="customRepoInput" class="w-full bg-[#1e1f20] border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500" placeholder="Or type: owner/repo">
+                    </div>
+                </div>
+
+                <!-- Bot Settings -->
+                <div>
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">System Instructions</label>
+                    <textarea id="systemPrompt" rows="4" class="w-full bg-[#282a2c] border border-gray-700 rounded-lg p-2.5 text-xs text-gray-200 focus:outline-none focus:border-blue-500 resize-none leading-relaxed">You are an autonomous GitHub AI Engineer agent. You have real tool execution access to GitHub. You can create repositories, create or update files, delete files, read code, list issues, and manage repos according to user instructions.</textarea>
+                </div>
+            </div>
+
+            <div class="p-3 border-t border-gray-800 bg-[#18191a] text-center">
+                <p class="text-[11px] text-gray-500">Gemini 2.5 Flash + GitHub API</p>
+            </div>
+        </aside>
+
+        <!-- Sidebar Overlay for Mobile -->
+        <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black/60 z-20"></div>
+
+        <!-- Chat Area -->
+        <main class="flex-1 flex flex-col bg-[#131314] relative">
+            
+            <!-- Messages List -->
+            <div id="chatMessages" class="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 custom-scrollbar">
+                
+                <!-- Welcome Banner -->
+                <div id="welcomeCard" class="max-w-xl mx-auto my-4 bg-[#1e1f20] border border-gray-800 rounded-2xl p-5 text-center shadow-lg">
+                    <div class="w-10 h-10 bg-blue-600/20 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fa-solid fa-mobile-screen text-xl"></i>
+                    </div>
+                    <h1 class="text-lg font-bold text-white mb-1">Mobile Gemini GitHub Assistant</h1>
+                    <p class="text-xs text-gray-400 mb-4">Your login token and chat conversation are now automatically remembered on your phone.</p>
+
+                    <div class="grid grid-cols-1 gap-2 text-left">
+                        <button class="suggested-prompt-btn bg-[#282a2c] hover:bg-[#333537] border border-gray-700/60 p-2.5 rounded-xl transition text-xs text-gray-300 flex items-center gap-2 active:bg-gray-700">
+                            <i class="fa-solid fa-plus text-emerald-400"></i> Create a new repository named 'mobile-test-app'
+                        </button>
+                        <button class="suggested-prompt-btn bg-[#282a2c] hover:bg-[#333537] border border-gray-700/60 p-2.5 rounded-xl transition text-xs text-gray-300 flex items-center gap-2 active:bg-gray-700">
+                            <i class="fa-solid fa-file-circle-plus text-blue-400"></i> Add index.html to active repository
+                        </button>
+                        <button class="suggested-prompt-btn bg-[#282a2c] hover:bg-[#333537] border border-gray-700/60 p-2.5 rounded-xl transition text-xs text-gray-300 flex items-center gap-2 active:bg-gray-700">
+                            <i class="fa-solid fa-folder-tree text-amber-400"></i> List all files in active repository
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="hidden px-4 py-2 flex items-center space-x-2 text-xs text-blue-400">
+                <div class="flex space-x-1">
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0s"></div>
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.15s"></div>
+                    <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+                </div>
+                <span id="loadingText">Processing request...</span>
+            </div>
+
+            <!-- Mobile Input Bar -->
+            <div class="p-2 md:p-4 border-t border-gray-800 bg-[#1e1f20]/80 backdrop-blur-md">
+                <div class="max-w-4xl mx-auto relative flex items-end bg-[#282a2c] border border-gray-700 rounded-2xl p-1.5 focus-within:border-blue-500 transition">
+                    <textarea id="userInput" rows="1" class="w-full bg-transparent border-0 text-sm text-gray-100 focus:outline-none focus:ring-0 px-2 py-1.5 resize-none max-h-28 custom-scrollbar placeholder-gray-500" placeholder="Type instruction for GitHub..."></textarea>
+                    
+                    <button id="sendBtn" class="bg-blue-600 hover:bg-blue-500 text-white rounded-xl p-2.5 ml-1 transition flex-shrink-0 active:scale-90">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // LocalStorage Keys
+        const STORAGE_TOKEN = 'gh_bot_token';
+        const STORAGE_REPO = 'gh_bot_active_repo';
+        const STORAGE_CHAT = 'gh_bot_chat_history';
+
+        let chatHistory = [];
+        let githubToken = "";
+        let githubUser = null;
+        const apiKey = ""; // Injected dynamically at runtime
+
+        // Elements
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const systemPrompt = document.getElementById('systemPrompt');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const loadingText = document.getElementById('loadingText');
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        const welcomeCard = document.getElementById('welcomeCard');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const fsIcon = document.getElementById('fsIcon');
+
+        // GitHub Elements
+        const githubTokenInput = document.getElementById('githubTokenInput');
+        const connectGithubBtn = document.getElementById('connectGithubBtn');
+        const disconnectGithubBtn = document.getElementById('disconnectGithubBtn');
+        const githubBadge = document.getElementById('githubBadge');
+        const githubBadgeIcon = document.getElementById('githubBadgeIcon');
+        const githubStatusText = document.getElementById('githubStatusText');
+        const ghConnDot = document.getElementById('ghConnDot');
+        const repoSelectorContainer = document.getElementById('repoSelectorContainer');
+        const repoSelect = document.getElementById('repoSelect');
+        const customRepoInput = document.getElementById('customRepoInput');
+
+        // Initial Load on App Startup
+        window.addEventListener('DOMContentLoaded', async () => {
+            loadSavedChatHistory();
+            
+            // Check for saved token
+            const savedToken = localStorage.getItem(STORAGE_TOKEN);
+            if (savedToken) {
+                githubTokenInput.value = savedToken;
+                await connectWithToken(savedToken, true);
+            }
+
+            const savedRepo = localStorage.getItem(STORAGE_REPO);
+            if (savedRepo) {
+                customRepoInput.value = savedRepo;
+            }
+        });
+
+        // Toggle Fullscreen Mode
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().then(() => {
+                    fsIcon.className = "fa-solid fa-compress text-sm";
+                }).catch(err => {
+                    alert("Fullscreen not supported or allowed by browser.");
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().then(() => {
+                        fsIcon.className = "fa-solid fa-expand text-sm";
+                    });
+                }
+            }
+        });
+
+        // Auto-expand textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Sidebar Navigation
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebarOverlay.classList.toggle('hidden');
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleSidebar);
+        closeSidebarBtn.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+        githubBadge.addEventListener('click', toggleSidebar);
+
+        // Clear Chat & Wipe Storage
+        clearChatBtn.addEventListener('click', () => {
+            if (confirm("Clear all current chat history on your phone?")) {
+                chatHistory = [];
+                localStorage.removeItem(STORAGE_CHAT);
+                chatMessages.innerHTML = '';
+                chatMessages.appendChild(welcomeCard);
+                welcomeCard.classList.remove('hidden');
+                bindSuggestedPrompts();
+            }
+        });
+
+        // Save Chat History to LocalStorage
+        function saveChatHistory() {
+            try {
+                localStorage.setItem(STORAGE_CHAT, JSON.stringify(chatHistory));
+            } catch (e) {
+                // Storage limit safety
+            }
+        }
+
+        // Restore Chat History from LocalStorage
+        function loadSavedChatHistory() {
+            const saved = localStorage.getItem(STORAGE_CHAT);
+            if (!saved) return;
+            
+            try {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    chatHistory = parsed;
+                    welcomeCard.classList.add('hidden');
+                    
+                    chatHistory.forEach(item => {
+                        if (item.role === 'user' && item.parts?.[0]?.text) {
+                            appendMessage('user', item.parts[0].text, false);
+                        } else if (item.role === 'model' && item.parts?.[0]?.text) {
+                            appendMessage('bot', item.parts[0].text, false);
+                        }
+                    });
+                }
+            } catch (e) {
+                localStorage.removeItem(STORAGE_CHAT);
+            }
+        }
+
+        // Suggested Prompts
+        function bindSuggestedPrompts() {
+            document.querySelectorAll('.suggested-prompt-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const text = btn.innerText.trim();
+                    userInput.value = text;
+                    sendMessage();
+                });
+            });
+        }
+        bindSuggestedPrompts();
+
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        // GitHub REST Engine
+        async function ghFetch(endpoint, options = {}) {
+            if (!githubToken) throw new Error("GitHub token not set");
+            const headers = {
+                'Authorization': `Bearer ${githubToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            };
+            const res = await fetch(`https://api.github.com${endpoint}`, { ...options, headers });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || `GitHub API error (${res.status})`);
+            }
+            if (res.status === 204) return true;
+            return res.json();
+        }
+
+        async function loadUserRepos() {
+            try {
+                const repos = await ghFetch('/user/repos?per_page=100&sort=updated');
+                repoSelect.innerHTML = '<option value="">Select a repository...</option>';
+                repos.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.full_name;
+                    opt.innerText = `${r.full_name}`;
+                    repoSelect.appendChild(opt);
+                });
+                const savedRepo = localStorage.getItem(STORAGE_REPO);
+                if (savedRepo) repoSelect.value = savedRepo;
+            } catch (e) {}
+        }
+
+        repoSelect.addEventListener('change', () => {
+            if (repoSelect.value) {
+                customRepoInput.value = repoSelect.value;
+                localStorage.setItem(STORAGE_REPO, repoSelect.value);
+            }
+        });
+
+        customRepoInput.addEventListener('change', () => {
+            localStorage.setItem(STORAGE_REPO, customRepoInput.value.trim());
+        });
+
+        async function connectWithToken(token, silent = false) {
+            try {
+                connectGithubBtn.innerText = 'Verifying...';
+                githubToken = token;
+                
+                githubUser = await ghFetch('/user');
+
+                githubStatusText.innerText = `@${githubUser.login}`;
+                githubBadgeIcon.className = "fa-brands fa-github text-emerald-400";
+                ghConnDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+                
+                disconnectGithubBtn.classList.remove('hidden');
+                connectGithubBtn.classList.add('hidden');
+                repoSelectorContainer.classList.remove('hidden');
+
+                // Save permanently
+                localStorage.setItem(STORAGE_TOKEN, token);
+
+                await loadUserRepos();
+
+                if (!silent) {
+                    appendMessage('bot', `✅ **GitHub Token Saved!** Connected as **@${githubUser.login}**.`);
+                }
+
+            } catch (err) {
+                if (!silent) alert(`GitHub Login Failed: ${err.message}`);
+                githubToken = "";
+                githubUser = null;
+                localStorage.removeItem(STORAGE_TOKEN);
+                disconnectGithubBtn.classList.add('hidden');
+                connectGithubBtn.classList.remove('hidden');
+            } finally {
+                connectGithubBtn.innerText = 'Connect & Save';
+            }
+        }
+
+        connectGithubBtn.addEventListener('click', () => {
+            const token = githubTokenInput.value.trim();
+            if (!token) return alert('Please paste a Personal Access Token.');
+            connectWithToken(token);
+        });
+
+        disconnectGithubBtn.addEventListener('click', () => {
+            githubToken = "";
+            githubUser = null;
+            githubTokenInput.value = "";
+            githubStatusText.innerText = "Offline";
+            githubBadgeIcon.className = "fa-brands fa-github text-sm";
+            ghConnDot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
+            
+            localStorage.removeItem(STORAGE_TOKEN);
+            localStorage.removeItem(STORAGE_REPO);
+
+            disconnectGithubBtn.classList.add('hidden');
+            connectGithubBtn.classList.remove('hidden');
+            repoSelectorContainer.classList.add('hidden');
+
+            appendMessage('bot', 'Logged out and token removed from this device.');
+        });
+
+        function getActiveRepoName() {
+            return customRepoInput.value.trim() || repoSelect.value || "";
+        }
+
+        // Tools Definition
+        const GITHUB_TOOLS = [
+            {
+                name: "create_repository",
+                description: "Creates a brand new GitHub repository on the user's account.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        name: { type: "STRING", description: "Name of the new repository" },
+                        description: { type: "STRING", description: "Short description of the repository" },
+                        is_private: { type: "BOOLEAN", description: "Whether private" },
+                        auto_init: { type: "BOOLEAN", description: "Initialize with README" }
+                    },
+                    required: ["name"]
+                }
+            },
+            {
+                name: "create_or_update_file",
+                description: "Creates a new file or updates an existing file in a repository.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        repo: { type: "STRING", description: "Repository path as owner/repo" },
+                        path: { type: "STRING", description: "File path in repo" },
+                        content: { type: "STRING", description: "Text content" },
+                        commit_message: { type: "STRING", description: "Commit description" }
+                    },
+                    required: ["repo", "path", "content", "commit_message"]
+                }
+            },
+            {
+                name: "read_file_content",
+                description: "Reads the content of a file from a repository.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        repo: { type: "STRING", description: "Repository path as owner/repo" },
+                        path: { type: "STRING", description: "File path" }
+                    },
+                    required: ["repo", "path"]
+                }
+            },
+            {
+                name: "delete_file",
+                description: "Deletes a file from a repository.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        repo: { type: "STRING", description: "Repository path as owner/repo" },
+                        path: { type: "STRING", description: "File path" },
+                        commit_message: { type: "STRING", description: "Commit message" }
+                    },
+                    required: ["repo", "path", "commit_message"]
+                }
+            },
+            {
+                name: "list_repository_files",
+                description: "Lists files in a repository directory.",
+                parameters: {
+                    type: "OBJECT",
+                    properties: {
+                        repo: { type: "STRING", description: "Repository path as owner/repo" },
+                        path: { type: "STRING", description: "Folder path" }
+                    },
+                    required: ["repo"]
+                }
+            }
+        ];
+
+        async function executeToolCall(name, args) {
+            if (!githubToken) throw new Error("GitHub token missing! Save token in settings.");
+            const repo = args.repo || getActiveRepoName();
+
+            if (name === "create_repository") {
+                const res = await ghFetch('/user/repos', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: args.name,
+                        description: args.description || '',
+                        private: !!args.is_private,
+                        auto_init: args.auto_init !== false
+                    })
+                });
+                await loadUserRepos();
+                return { success: true, url: res.html_url, fullName: res.full_name, message: `Repository '${res.full_name}' created!` };
+            }
+
+            if (name === "create_or_update_file") {
+                if (!repo) throw new Error("Please specify target 'repo' as owner/repo.");
+                let sha = undefined;
+                try {
+                    const existing = await ghFetch(`/repos/${repo}/contents/${args.path}`);
+                    sha = existing.sha;
+                } catch (e) {}
+
+                const encodedContent = btoa(unescape(encodeURIComponent(args.content)));
+
+                const bodyData = {
+                    message: args.commit_message || `Update ${args.path}`,
+                    content: encodedContent
+                };
+                if (sha) bodyData.sha = sha;
+
+                const res = await ghFetch(`/repos/${repo}/contents/${args.path}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(bodyData)
+                });
+
+                return { success: true, commitSha: res.commit.sha, path: args.path, url: res.content.html_url, message: `File '${args.path}' in '${repo}' saved!` };
+            }
+
+            if (name === "read_file_content") {
+                if (!repo) throw new Error("Please specify target 'repo'.");
+                const res = await ghFetch(`/repos/${repo}/contents/${args.path}`);
+                const decoded = decodeURIComponent(escape(atob(res.content)));
+                return { success: true, path: args.path, content: decoded };
+            }
+
+            if (name === "delete_file") {
+                if (!repo) throw new Error("Please specify target 'repo'.");
+                const existing = await ghFetch(`/repos/${repo}/contents/${args.path}`);
+                await ghFetch(`/repos/${repo}/contents/${args.path}`, {
+                    method: 'DELETE',
+                    body: JSON.stringify({
+                        message: args.commit_message || `Delete ${args.path}`,
+                        sha: existing.sha
+                    })
+                });
+                return { success: true, message: `File '${args.path}' deleted.` };
+            }
+
+            if (name === "list_repository_files") {
+                if (!repo) throw new Error("Please specify target 'repo'.");
+                const folder = args.path || '';
+                const items = await ghFetch(`/repos/${repo}/contents/${folder}`);
+                const list = items.map(i => ({ name: i.name, path: i.path, type: i.type }));
+                return { success: true, repo, folder, items: list };
+            }
+
+            throw new Error(`Unknown tool: ${name}`);
+        }
+
+        async function sendMessage() {
+            const query = userInput.value.trim();
+            if (!query) return;
+
+            if (welcomeCard && !welcomeCard.classList.contains('hidden')) {
+                welcomeCard.classList.add('hidden');
+            }
+
+            const activeRepo = getActiveRepoName();
+            let promptText = query;
+            if (activeRepo) {
+                promptText = `[Active Repo context: ${activeRepo}]\n${query}`;
+            }
+
+            appendMessage('user', query);
+            userInput.value = '';
+            userInput.style.height = 'auto';
+
+            loadingText.innerText = "Gemini processing...";
+            loadingIndicator.classList.remove('hidden');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            chatHistory.push({ role: 'user', parts: [{ text: promptText }] });
+            saveChatHistory();
+
+            try {
+                await processAgentLoop();
+            } catch (err) {
+                appendMessage('bot', `⚠️ **Error:** ${err.message}`);
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+
+        async function processAgentLoop() {
+            let continueLoop = true;
+            let depth = 0;
+
+            while (continueLoop && depth < 5) {
+                depth++;
+                const responseData = await callGeminiAPI();
+                const candidate = responseData.candidates?.[0];
+                const contentPart = candidate?.content?.parts?.[0];
+
+                if (contentPart?.functionCall) {
+                    const call = contentPart.functionCall;
+                    loadingText.innerText = `GitHub: Executing ${call.name}...`;
+
+                    chatHistory.push(candidate.content);
+
+                    let result;
+                    try {
+                        result = await executeToolCall(call.name, call.args);
+                    } catch (e) {
+                        result = { success: false, error: e.message };
+                    }
+
+                    chatHistory.push({
+                        role: 'function',
+                        parts: [{
+                            functionResponse: {
+                                name: call.name,
+                                response: result
+                            }
+                        }]
+                    });
+                    saveChatHistory();
+
+                } else {
+                    const text = contentPart?.text || "Done.";
+                    appendMessage('bot', text);
+                    chatHistory.push({ role: 'model', parts: [{ text }] });
+                    saveChatHistory();
+                    continueLoop = false;
+                }
+            }
+        }
+
+        async function callGeminiAPI() {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: chatHistory,
+                systemInstruction: {
+                    parts: [{ text: systemPrompt.value }]
+                },
+                tools: [{
+                    functionDeclarations: GITHUB_TOOLS
+                }]
+            };
+
+            const maxRetries = 5;
+            let delay = 1000;
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (res.ok) {
+                        return await res.json();
+                    }
+                } catch (e) {}
+
+                if (i < maxRetries - 1) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2;
+                }
+            }
+
+            throw new Error('API connection timed out after retries.');
+        }
+
+        function appendMessage(sender, text, scroll = true) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} w-full`;
+
+            const isUser = sender === 'user';
+
+            const container = document.createElement('div');
+            container.className = `max-w-[90%] md:max-w-[75%] rounded-2xl p-3 ${
+                isUser 
+                    ? 'bg-blue-600 text-white rounded-br-none' 
+                    : 'bg-[#1e1f20] border border-gray-800 text-gray-200 rounded-bl-none shadow-md'
+            }`;
+
+            const header = document.createElement('div');
+            header.className = 'flex items-center space-x-1.5 mb-1 text-[11px] opacity-70 font-medium';
+            header.innerHTML = isUser 
+                ? '<i class="fa-solid fa-user"></i><span>You</span>' 
+                : '<i class="fa-solid fa-robot text-blue-400"></i><span>Google AI</span>';
+
+            const content = document.createElement('div');
+            content.className = 'prose prose-invert text-xs md:text-sm max-w-none leading-relaxed';
+
+            if (isUser) {
+                const cleanUserText = text.replace(/\[Active Repo context:[\s\S]*?\]\n/g, '');
+                content.innerText = cleanUserText;
+            } else {
+                content.innerHTML = marked.parse(text);
+                
+                content.querySelectorAll('pre').forEach(pre => {
+                    const btn = document.createElement('button');
+                    btn.className = 'text-[10px] bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-0.5 rounded ml-auto block mb-1.5 transition active:scale-95';
+                    btn.innerText = 'Copy Code';
+                    btn.onclick = () => {
+                        const code = pre.querySelector('code')?.innerText || pre.innerText;
+                        
+                        const textarea = document.createElement('textarea');
+                        textarea.value = code;
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+
+                        btn.innerText = 'Copied!';
+                        setTimeout(() => btn.innerText = 'Copy Code', 2000);
+                    };
+                    pre.insertBefore(btn, pre.firstChild);
+                });
+            }
+
+            container.appendChild(header);
+            container.appendChild(content);
+            wrapper.appendChild(container);
+            chatMessages.appendChild(wrapper);
+
+            if (scroll) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        }
+    </script>
+</body>
+</html>
+
