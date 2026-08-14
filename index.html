@@ -123,10 +123,9 @@
                     <label class="block text-xs font-bold text-gray-300 uppercase tracking-wider">Gemini Model</label>
                     <select id="modelSelect" class="w-full bg-[#1e1f20] border border-gray-700 rounded-lg px-2 py-2 text-xs text-gray-200 focus:outline-none focus:border-blue-500">
                         <option value="auto">Auto-Detect Best Available Model</option>
-                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                        <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                        <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash (Preview)</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended)</option>
+                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite</option>
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                     </select>
                 </div>
 
@@ -618,7 +617,10 @@
             if (name === "read_file_content") {
                 if (!repo) throw new Error("Please specify target 'repo'.");
                 const res = await ghFetch(`/repos/${repo}/contents/${args.path}`);
-                const decoded = decodeURIComponent(escape(atob(res.content)));
+                // GitHub returns base64 content wrapped with newlines every 60
+                // chars; atob() throws on those, so strip whitespace first.
+                const cleanBase64 = res.content.replace(/\s/g, '');
+                const decoded = decodeURIComponent(escape(atob(cleanBase64)));
                 return { success: true, path: args.path, content: decoded };
             }
 
@@ -639,6 +641,10 @@
                 if (!repo) throw new Error("Please specify target 'repo'.");
                 const folder = args.path || '';
                 const items = await ghFetch(`/repos/${repo}/contents/${folder}`);
+                if (!Array.isArray(items)) {
+                    // The path pointed to a single file, not a directory.
+                    return { success: true, repo, folder, items: [{ name: items.name, path: items.path, type: items.type }] };
+                }
                 const list = items.map(i => ({ name: i.name, path: i.path, type: i.type }));
                 return { success: true, repo, folder, items: list };
             }
@@ -732,16 +738,15 @@
                 throw new Error("Missing Gemini API key! Please open Settings (Sliders) and enter your Gemini API key.");
             }
 
-            const isPreview = (typeof apiKey !== 'undefined' && apiKey === "" && !customGeminiKey);
             const userChoice = modelSelect ? modelSelect.value : 'auto';
 
             let candidateModels = [];
             if (userChoice !== 'auto') {
                 candidateModels = [userChoice];
-            } else if (isPreview) {
-                candidateModels = ['gemini-2.5-flash-preview-09-2025', 'gemini-2.5-flash', 'gemini-1.5-flash'];
             } else {
-                candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.5-flash-preview-09-2025'];
+                // Gemini 1.5 and 2.0 Flash/Flash-Lite have been retired; 2.5 is the
+                // current stable line as of mid-2026.
+                candidateModels = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.5-pro'];
             }
 
             let lastErrorMessage = "";
@@ -866,4 +871,3 @@
     </script>
 </body>
 </html>
-
