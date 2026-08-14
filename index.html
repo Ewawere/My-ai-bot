@@ -72,16 +72,19 @@
         </div>
 
         <div class="flex items-center space-x-2">
+            <!-- Fullscreen Toggle Button -->
             <button id="fullscreenBtn" class="p-2 text-gray-300 hover:text-white rounded-lg bg-gray-800/80 active:bg-gray-700" title="Toggle Fullscreen">
                 <i class="fa-solid fa-expand text-sm" id="fsIcon"></i>
             </button>
             
+            <!-- GitHub Connection Status Badge -->
             <button id="githubBadge" class="text-xs bg-gray-800 text-gray-300 px-2.5 py-1.5 rounded-lg flex items-center gap-1 border border-gray-700">
                 <i class="fa-brands fa-github text-sm" id="githubBadgeIcon"></i>
                 <span id="githubStatusText" class="max-w-[80px] truncate text-[11px]">Offline</span>
             </button>
 
-            <button id="clearChatBtn" class="p-2 text-red-400 hover:text-red-300 rounded-lg bg-gray-800/80 active:bg-gray-700" title="Clear Chat">
+            <!-- Clear Chat -->
+            <button id="clearChatBtn" class="p-2 text-red-400 hover:text-red-300 rounded-lg bg-gray-800/80 active:bg-gray-700" title="Clear Chat History">
                 <i class="fa-solid fa-trash text-sm"></i>
             </button>
         </div>
@@ -107,14 +110,14 @@
                 <div class="bg-[#282a2c] border border-gray-700/80 rounded-xl p-3.5 space-y-2">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-gray-300 flex items-center gap-1.5 uppercase tracking-wider">
-                            <i class="fa-solid fa-sparkles text-sm text-blue-400"></i> Gemini API Key
+                            <i class="fa-solid fa-sparkles text-sm text-blue-400"></i> Custom Gemini Key
                         </span>
                         <span id="geminiConnDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                     </div>
-                    <input type="password" id="geminiKeyInput" class="w-full bg-[#1e1f20] border border-gray-700 rounded-lg px-2.5 py-2 text-xs text-gray-200 focus:outline-none focus:border-blue-500" placeholder="Optional when testing in Preview">
-                    <p class="text-[10px] text-gray-400">Auto-configured in preview, or enter key for GitHub Pages.</p>
+                    <input type="password" id="geminiKeyInput" class="w-full bg-[#1e1f20] border border-gray-700 rounded-lg px-2.5 py-2 text-xs text-gray-200 focus:outline-none focus:border-blue-500" placeholder="Optional (AQ.Ab... or AIzaSy...)">
+                    <p class="text-[10px] text-gray-400">Auto-configured in Preview. Set your API Key when hosting on GitHub Pages.</p>
                 </div>
-                
+
                 <!-- GITHUB INTEGRATION SECTION -->
                 <div class="bg-[#282a2c] border border-gray-700/80 rounded-xl p-3.5 space-y-3">
                     <div class="flex items-center justify-between">
@@ -127,6 +130,7 @@
                     <div>
                         <label class="block text-[11px] text-gray-400 mb-1">Personal Access Token (PAT)</label>
                         <input type="password" id="githubTokenInput" class="w-full bg-[#1e1f20] border border-gray-700 rounded-lg px-2.5 py-2 text-xs text-gray-200 focus:outline-none focus:border-blue-500" placeholder="ghp_xxxxxxxxxxxxxxxxx">
+                        <p class="text-[10px] text-emerald-400 mt-1">Saved on your device!</p>
                     </div>
 
                     <div class="flex gap-2">
@@ -156,7 +160,7 @@
             </div>
 
             <div class="p-3 border-t border-gray-800 bg-[#18191a] text-center">
-                <p class="text-[11px] text-gray-500">Google Gemini API + GitHub REST API</p>
+                <p class="text-[11px] text-gray-500">Powered by Gemini 2.5 Flash API</p>
             </div>
         </aside>
 
@@ -174,8 +178,8 @@
                     <div class="w-10 h-10 bg-blue-600/20 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-3">
                         <i class="fa-solid fa-mobile-screen text-xl"></i>
                     </div>
-                    <h1 class="text-lg font-bold text-white mb-1">Mobile Gemini GitHub Assistant</h1>
-                    <p class="text-xs text-gray-400 mb-4">Connect your GitHub Personal Access Token in Settings to manage repositories.</p>
+                    <h1 class="text-lg font-bold text-white mb-1">Google AI GitHub Agent</h1>
+                    <p class="text-xs text-gray-400 mb-4">Powered by Gemini 2.5 Flash. Connect your GitHub Personal Access Token in Settings to manage repositories.</p>
 
                     <div class="grid grid-cols-1 gap-2 text-left">
                         <button class="suggested-prompt-btn bg-[#282a2c] hover:bg-[#333537] border border-gray-700/60 p-2.5 rounded-xl transition text-xs text-gray-300 flex items-center gap-2 active:bg-gray-700">
@@ -222,12 +226,12 @@
         const STORAGE_REPO = 'gh_bot_active_repo';
         const STORAGE_CHAT = 'gh_bot_chat_history';
 
-        // Runtime Platform Injection Key
+        // Platform runtime API key injection
         const apiKey = ""; 
 
         let chatHistory = [];
         let githubToken = "";
-        let geminiApiKey = "";
+        let customGeminiKey = "";
         let githubUser = null;
 
         const chatMessages = document.getElementById('chatMessages');
@@ -262,12 +266,9 @@
             loadSavedChatHistory();
             
             const savedGemini = localStorage.getItem(STORAGE_GEMINI);
-            if (savedGemini && savedGemini.trim().length > 5) {
-                geminiApiKey = savedGemini.trim();
-                geminiKeyInput.value = geminiApiKey;
-            } else {
-                geminiApiKey = apiKey || ""; // Use system runtime key in preview
-                if (geminiApiKey) geminiKeyInput.value = geminiApiKey;
+            if (savedGemini && savedGemini.trim().length > 0) {
+                customGeminiKey = savedGemini.trim();
+                geminiKeyInput.value = customGeminiKey;
             }
             geminiConnDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
 
@@ -454,10 +455,9 @@
             const gKey = geminiKeyInput.value.trim();
             const ghToken = githubTokenInput.value.trim();
 
-            if (gKey.length > 5) {
-                geminiApiKey = gKey;
+            if (gKey) {
+                customGeminiKey = gKey;
                 localStorage.setItem(STORAGE_GEMINI, gKey);
-                geminiConnDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
             }
 
             if (ghToken) {
@@ -633,8 +633,6 @@
             const query = userInput.value.trim();
             if (!query) return;
 
-            const targetKey = geminiApiKey || apiKey || "";
-
             if (welcomeCard && !welcomeCard.classList.contains('hidden')) {
                 welcomeCard.classList.add('hidden');
             }
@@ -657,7 +655,7 @@
             saveChatHistory();
 
             try {
-                await processAgentLoop(targetKey);
+                await processAgentLoop();
             } catch (err) {
                 appendMessage('bot', `⚠️ **Error:** ${err.message}`);
             } finally {
@@ -666,13 +664,13 @@
             }
         }
 
-        async function processAgentLoop(key) {
+        async function processAgentLoop() {
             let continueLoop = true;
             let depth = 0;
 
             while (continueLoop && depth < 5) {
                 depth++;
-                const responseData = await callGeminiAPI(key);
+                const responseData = await callGeminiAPI();
                 const candidate = responseData.candidates?.[0];
                 const contentPart = candidate?.content?.parts?.[0];
 
@@ -710,8 +708,11 @@
             }
         }
 
-        async function callGeminiAPI(keyToUse) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${keyToUse}`;
+        async function callGeminiAPI() {
+            // Effective key prioritizing custom user key, falling back to runtime environment apiKey
+            const effectiveKey = customGeminiKey || apiKey;
+            
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${effectiveKey}`;
 
             const payload = {
                 contents: chatHistory,
@@ -736,8 +737,15 @@
 
                     if (res.ok) {
                         return await res.json();
+                    } else {
+                        const errObj = await res.json().catch(() => ({}));
+                        if (res.status === 400 || res.status === 403) {
+                            throw new Error(errObj.error?.message || `API Key rejected (${res.status})`);
+                        }
                     }
-                } catch (e) {}
+                } catch (e) {
+                    if (e.message.includes("API Key rejected")) throw e;
+                }
 
                 if (i < maxRetries - 1) {
                     await new Promise(resolve => setTimeout(resolve, delay));
@@ -745,7 +753,7 @@
                 }
             }
 
-            throw new Error('API connection error. Please check network connection.');
+            throw new Error('API connection timed out after retries. Check network or key settings.');
         }
 
         function appendMessage(sender, text, scroll = true) {
