@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Google AI GitHub Mobile Studio</title>
-    <!-- Web App Manifest Meta for iOS / Android fullscreen app capability -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="AI Bot">
@@ -53,13 +52,12 @@
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #3c4043; border-radius: 3px; }
-        /* Touch feedback optimization */
         button:active { transform: scale(0.97); }
     </style>
 </head>
 <body class="bg-[#131314] text-gray-200 h-full flex flex-col font-sans antialiased overflow-hidden">
 
-    <!-- Top Mobile-Optimized Navigation Header -->
+    <!-- Top Navigation Header -->
     <header class="h-14 border-b border-gray-800 bg-[#1e1f20] px-3 flex items-center justify-between shrink-0 z-10">
         <div class="flex items-center space-x-2">
             <button id="mobileMenuBtn" class="text-gray-300 hover:text-white p-2 rounded-lg bg-gray-800/80 active:bg-gray-700">
@@ -74,19 +72,16 @@
         </div>
 
         <div class="flex items-center space-x-2">
-            <!-- Fullscreen Toggle Button -->
             <button id="fullscreenBtn" class="p-2 text-gray-300 hover:text-white rounded-lg bg-gray-800/80 active:bg-gray-700" title="Toggle Fullscreen">
                 <i class="fa-solid fa-expand text-sm" id="fsIcon"></i>
             </button>
             
-            <!-- GitHub Badge -->
             <button id="githubBadge" class="text-xs bg-gray-800 text-gray-300 px-2.5 py-1.5 rounded-lg flex items-center gap-1 border border-gray-700">
                 <i class="fa-brands fa-github text-sm" id="githubBadgeIcon"></i>
                 <span id="githubStatusText" class="max-w-[80px] truncate text-[11px]">Offline</span>
             </button>
 
-            <!-- Clear Chat -->
-            <button id="clearChatBtn" class="p-2 text-red-400 hover:text-red-300 rounded-lg bg-gray-800/80 active:bg-gray-700" title="Clear Chat History">
+            <button id="clearChatBtn" class="p-2 text-red-400 hover:text-red-300 rounded-lg bg-gray-800/80 active:bg-gray-700" title="Clear Chat">
                 <i class="fa-solid fa-trash text-sm"></i>
             </button>
         </div>
@@ -99,7 +94,7 @@
         <aside id="sidebar" class="w-80 bg-[#1e1f20] border-r border-gray-800 flex flex-col transition-all duration-300 z-30 fixed md:static inset-y-0 left-0 -translate-x-full md:translate-x-0 shadow-2xl">
             <div class="p-4 border-b border-gray-800 flex justify-between items-center">
                 <h2 class="font-medium text-gray-200 flex items-center gap-2 text-sm">
-                    <i class="fa-solid fa-gear text-blue-400"></i> Bot & Account Settings
+                    <i class="fa-solid fa-key text-blue-400"></i> Settings & Keys
                 </h2>
                 <button id="closeSidebarBtn" class="text-gray-400 hover:text-white p-1">
                     <i class="fa-solid fa-xmark text-lg"></i>
@@ -107,6 +102,18 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+
+                <!-- GEMINI API KEY SECTION -->
+                <div class="bg-[#282a2c] border border-gray-700/80 rounded-xl p-3.5 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-gray-300 flex items-center gap-1.5 uppercase tracking-wider">
+                            <i class="fa-solid fa-sparkles text-sm text-blue-400"></i> Gemini API Key
+                        </span>
+                        <span id="geminiConnDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    </div>
+                    <input type="password" id="geminiKeyInput" class="w-full bg-[#1e1f20] border border-gray-700 rounded-lg px-2.5 py-2 text-xs text-gray-200 focus:outline-none focus:border-blue-500" placeholder="Optional when testing in Preview">
+                    <p class="text-[10px] text-gray-400">Auto-configured in preview, or enter key for GitHub Pages.</p>
+                </div>
                 
                 <!-- GITHUB INTEGRATION SECTION -->
                 <div class="bg-[#282a2c] border border-gray-700/80 rounded-xl p-3.5 space-y-3">
@@ -120,15 +127,14 @@
                     <div>
                         <label class="block text-[11px] text-gray-400 mb-1">Personal Access Token (PAT)</label>
                         <input type="password" id="githubTokenInput" class="w-full bg-[#1e1f20] border border-gray-700 rounded-lg px-2.5 py-2 text-xs text-gray-200 focus:outline-none focus:border-blue-500" placeholder="ghp_xxxxxxxxxxxxxxxxx">
-                        <p class="text-[10px] text-emerald-400 mt-1">Saved permanently on this device until you log out!</p>
                     </div>
 
                     <div class="flex gap-2">
-                        <button id="connectGithubBtn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs py-2 rounded-lg font-medium transition active:scale-95">
-                            Connect & Save
+                        <button id="saveKeysBtn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs py-2 rounded-lg font-medium transition active:scale-95">
+                            Connect Account
                         </button>
                         <button id="disconnectGithubBtn" class="bg-red-900/60 hover:bg-red-800 text-red-200 text-xs px-2.5 py-2 rounded-lg transition hidden">
-                            Forget Token
+                            Disconnect
                         </button>
                     </div>
 
@@ -150,7 +156,7 @@
             </div>
 
             <div class="p-3 border-t border-gray-800 bg-[#18191a] text-center">
-                <p class="text-[11px] text-gray-500">Gemini 2.5 Flash + GitHub API</p>
+                <p class="text-[11px] text-gray-500">Google Gemini API + GitHub REST API</p>
             </div>
         </aside>
 
@@ -169,7 +175,7 @@
                         <i class="fa-solid fa-mobile-screen text-xl"></i>
                     </div>
                     <h1 class="text-lg font-bold text-white mb-1">Mobile Gemini GitHub Assistant</h1>
-                    <p class="text-xs text-gray-400 mb-4">Your login token and chat conversation are now automatically remembered on your phone.</p>
+                    <p class="text-xs text-gray-400 mb-4">Connect your GitHub Personal Access Token in Settings to manage repositories.</p>
 
                     <div class="grid grid-cols-1 gap-2 text-left">
                         <button class="suggested-prompt-btn bg-[#282a2c] hover:bg-[#333537] border border-gray-700/60 p-2.5 rounded-xl transition text-xs text-gray-300 flex items-center gap-2 active:bg-gray-700">
@@ -211,17 +217,19 @@
     </div>
 
     <script>
-        // LocalStorage Keys
         const STORAGE_TOKEN = 'gh_bot_token';
+        const STORAGE_GEMINI = 'gh_bot_gemini_key';
         const STORAGE_REPO = 'gh_bot_active_repo';
         const STORAGE_CHAT = 'gh_bot_chat_history';
 
+        // Runtime Platform Injection Key
+        const apiKey = ""; 
+
         let chatHistory = [];
         let githubToken = "";
+        let geminiApiKey = "";
         let githubUser = null;
-        const apiKey = ""; // Injected dynamically at runtime
 
-        // Elements
         const chatMessages = document.getElementById('chatMessages');
         const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
@@ -237,9 +245,10 @@
         const fullscreenBtn = document.getElementById('fullscreenBtn');
         const fsIcon = document.getElementById('fsIcon');
 
-        // GitHub Elements
+        const geminiKeyInput = document.getElementById('geminiKeyInput');
+        const geminiConnDot = document.getElementById('geminiConnDot');
         const githubTokenInput = document.getElementById('githubTokenInput');
-        const connectGithubBtn = document.getElementById('connectGithubBtn');
+        const saveKeysBtn = document.getElementById('saveKeysBtn');
         const disconnectGithubBtn = document.getElementById('disconnectGithubBtn');
         const githubBadge = document.getElementById('githubBadge');
         const githubBadgeIcon = document.getElementById('githubBadgeIcon');
@@ -249,11 +258,19 @@
         const repoSelect = document.getElementById('repoSelect');
         const customRepoInput = document.getElementById('customRepoInput');
 
-        // Initial Load on App Startup
         window.addEventListener('DOMContentLoaded', async () => {
             loadSavedChatHistory();
             
-            // Check for saved token
+            const savedGemini = localStorage.getItem(STORAGE_GEMINI);
+            if (savedGemini && savedGemini.trim().length > 5) {
+                geminiApiKey = savedGemini.trim();
+                geminiKeyInput.value = geminiApiKey;
+            } else {
+                geminiApiKey = apiKey || ""; // Use system runtime key in preview
+                if (geminiApiKey) geminiKeyInput.value = geminiApiKey;
+            }
+            geminiConnDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+
             const savedToken = localStorage.getItem(STORAGE_TOKEN);
             if (savedToken) {
                 githubTokenInput.value = savedToken;
@@ -266,13 +283,12 @@
             }
         });
 
-        // Toggle Fullscreen Mode
         fullscreenBtn.addEventListener('click', () => {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().then(() => {
                     fsIcon.className = "fa-solid fa-compress text-sm";
-                }).catch(err => {
-                    alert("Fullscreen not supported or allowed by browser.");
+                }).catch(() => {
+                    alert("Fullscreen not allowed by browser.");
                 });
             } else {
                 if (document.exitFullscreen) {
@@ -283,13 +299,11 @@
             }
         });
 
-        // Auto-expand textarea
         userInput.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
         });
 
-        // Sidebar Navigation
         function toggleSidebar() {
             sidebar.classList.toggle('-translate-x-full');
             sidebarOverlay.classList.toggle('hidden');
@@ -300,9 +314,8 @@
         sidebarOverlay.addEventListener('click', toggleSidebar);
         githubBadge.addEventListener('click', toggleSidebar);
 
-        // Clear Chat & Wipe Storage
         clearChatBtn.addEventListener('click', () => {
-            if (confirm("Clear all current chat history on your phone?")) {
+            if (confirm("Clear chat history?")) {
                 chatHistory = [];
                 localStorage.removeItem(STORAGE_CHAT);
                 chatMessages.innerHTML = '';
@@ -312,16 +325,12 @@
             }
         });
 
-        // Save Chat History to LocalStorage
         function saveChatHistory() {
             try {
                 localStorage.setItem(STORAGE_CHAT, JSON.stringify(chatHistory));
-            } catch (e) {
-                // Storage limit safety
-            }
+            } catch (e) {}
         }
 
-        // Restore Chat History from LocalStorage
         function loadSavedChatHistory() {
             const saved = localStorage.getItem(STORAGE_CHAT);
             if (!saved) return;
@@ -345,7 +354,6 @@
             }
         }
 
-        // Suggested Prompts
         function bindSuggestedPrompts() {
             document.querySelectorAll('.suggested-prompt-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -366,7 +374,6 @@
 
         sendBtn.addEventListener('click', sendMessage);
 
-        // GitHub REST Engine
         async function ghFetch(endpoint, options = {}) {
             if (!githubToken) throw new Error("GitHub token not set");
             const headers = {
@@ -412,7 +419,7 @@
 
         async function connectWithToken(token, silent = false) {
             try {
-                connectGithubBtn.innerText = 'Verifying...';
+                saveKeysBtn.innerText = 'Verifying...';
                 githubToken = token;
                 
                 githubUser = await ghFetch('/user');
@@ -422,16 +429,14 @@
                 ghConnDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
                 
                 disconnectGithubBtn.classList.remove('hidden');
-                connectGithubBtn.classList.add('hidden');
                 repoSelectorContainer.classList.remove('hidden');
 
-                // Save permanently
                 localStorage.setItem(STORAGE_TOKEN, token);
 
                 await loadUserRepos();
 
                 if (!silent) {
-                    appendMessage('bot', `✅ **GitHub Token Saved!** Connected as **@${githubUser.login}**.`);
+                    appendMessage('bot', `✅ **GitHub Connected!** Connected as **@${githubUser.login}**.`);
                 }
 
             } catch (err) {
@@ -439,17 +444,27 @@
                 githubToken = "";
                 githubUser = null;
                 localStorage.removeItem(STORAGE_TOKEN);
-                disconnectGithubBtn.classList.add('hidden');
-                connectGithubBtn.classList.remove('hidden');
+                ghConnDot.className = "w-2.5 h-2.5 rounded-full bg-red-500";
             } finally {
-                connectGithubBtn.innerText = 'Connect & Save';
+                saveKeysBtn.innerText = 'Connect Account';
             }
         }
 
-        connectGithubBtn.addEventListener('click', () => {
-            const token = githubTokenInput.value.trim();
-            if (!token) return alert('Please paste a Personal Access Token.');
-            connectWithToken(token);
+        saveKeysBtn.addEventListener('click', async () => {
+            const gKey = geminiKeyInput.value.trim();
+            const ghToken = githubTokenInput.value.trim();
+
+            if (gKey.length > 5) {
+                geminiApiKey = gKey;
+                localStorage.setItem(STORAGE_GEMINI, gKey);
+                geminiConnDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+            }
+
+            if (ghToken) {
+                await connectWithToken(ghToken);
+            } else {
+                alert('Saved!');
+            }
         });
 
         disconnectGithubBtn.addEventListener('click', () => {
@@ -464,17 +479,15 @@
             localStorage.removeItem(STORAGE_REPO);
 
             disconnectGithubBtn.classList.add('hidden');
-            connectGithubBtn.classList.remove('hidden');
             repoSelectorContainer.classList.add('hidden');
 
-            appendMessage('bot', 'Logged out and token removed from this device.');
+            appendMessage('bot', 'Logged out and GitHub token removed.');
         });
 
         function getActiveRepoName() {
             return customRepoInput.value.trim() || repoSelect.value || "";
         }
 
-        // Tools Definition
         const GITHUB_TOOLS = [
             {
                 name: "create_repository",
@@ -483,7 +496,7 @@
                     type: "OBJECT",
                     properties: {
                         name: { type: "STRING", description: "Name of the new repository" },
-                        description: { type: "STRING", description: "Short description of the repository" },
+                        description: { type: "STRING", description: "Short description" },
                         is_private: { type: "BOOLEAN", description: "Whether private" },
                         auto_init: { type: "BOOLEAN", description: "Initialize with README" }
                     },
@@ -544,7 +557,7 @@
         ];
 
         async function executeToolCall(name, args) {
-            if (!githubToken) throw new Error("GitHub token missing! Save token in settings.");
+            if (!githubToken) throw new Error("GitHub token missing! Connect account in settings.");
             const repo = args.repo || getActiveRepoName();
 
             if (name === "create_repository") {
@@ -620,6 +633,8 @@
             const query = userInput.value.trim();
             if (!query) return;
 
+            const targetKey = geminiApiKey || apiKey || "";
+
             if (welcomeCard && !welcomeCard.classList.contains('hidden')) {
                 welcomeCard.classList.add('hidden');
             }
@@ -642,7 +657,7 @@
             saveChatHistory();
 
             try {
-                await processAgentLoop();
+                await processAgentLoop(targetKey);
             } catch (err) {
                 appendMessage('bot', `⚠️ **Error:** ${err.message}`);
             } finally {
@@ -651,13 +666,13 @@
             }
         }
 
-        async function processAgentLoop() {
+        async function processAgentLoop(key) {
             let continueLoop = true;
             let depth = 0;
 
             while (continueLoop && depth < 5) {
                 depth++;
-                const responseData = await callGeminiAPI();
+                const responseData = await callGeminiAPI(key);
                 const candidate = responseData.candidates?.[0];
                 const contentPart = candidate?.content?.parts?.[0];
 
@@ -695,8 +710,8 @@
             }
         }
 
-        async function callGeminiAPI() {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        async function callGeminiAPI(keyToUse) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${keyToUse}`;
 
             const payload = {
                 contents: chatHistory,
@@ -730,7 +745,7 @@
                 }
             }
 
-            throw new Error('API connection timed out after retries.');
+            throw new Error('API connection error. Please check network connection.');
         }
 
         function appendMessage(sender, text, scroll = true) {
